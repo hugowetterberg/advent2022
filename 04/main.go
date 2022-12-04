@@ -20,8 +20,14 @@ func (r Range) Contains(b Range) bool {
 	return r[0] <= b[0] && r[1] >= b[1]
 }
 
+func (r Range) Overlaps(b Range) bool {
+	return r.Contains(b) || b.Contains(r) ||
+		(r[0] >= b[0] && r[0] <= b[1]) ||
+		(r[1] >= b[0] && r[1] <= b[1])
+}
+
 func run() error {
-	var linum, containedPairs int
+	var linum, containedPairs, overlappingPairs int
 
 	r := bufio.NewScanner(os.Stdin)
 
@@ -42,6 +48,10 @@ func run() error {
 		if a.Contains(b) || b.Contains(a) {
 			containedPairs++
 		}
+
+		if a.Overlaps(b) {
+			overlappingPairs++
+		}
 	}
 
 	err := r.Err()
@@ -51,6 +61,9 @@ func run() error {
 
 	fmt.Printf("assignement pairs where one fully contains the other: %d\n",
 		containedPairs)
+
+	fmt.Printf("assignement pairs that overlap: %d\n",
+		overlappingPairs)
 
 	return nil
 }
