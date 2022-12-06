@@ -14,7 +14,7 @@ func main() {
 }
 
 func run() error {
-	seq := make([]byte, 4)
+	seq := make([]byte, 14)
 
 	r := bufio.NewReader(os.Stdin)
 
@@ -36,7 +36,7 @@ func run() error {
 		}
 
 		n++
-		seq[3] = b
+		seq[13] = b
 	}
 
 	println("sequence is:", string(seq),
