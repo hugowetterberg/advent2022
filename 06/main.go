@@ -20,7 +20,8 @@ func run() error {
 
 	n, err := r.Read(seq)
 	if err != nil {
-		return fmt.Errorf("failed to read first four bytes: %w", err)
+		return fmt.Errorf("failed to read first %d bytes: %w",
+			len(seq), err)
 	}
 
 	for {
