@@ -36,7 +36,7 @@ func run() error {
 		}
 
 		n++
-		seq[13] = b
+		seq[len(seq)-1] = b
 	}
 
 	println("sequence is:", string(seq),
