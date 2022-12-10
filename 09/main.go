@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -36,8 +37,46 @@ func (c Coord) Adjacent(b Coord) bool {
 	return delta(c.X, b.X) <= 1 && delta(c.Y, b.Y) <= 1
 }
 
+func (c Coord) FindAdjacent(b Coord) (Coord, error) {
+	if c.Adjacent(b) {
+		return c, nil
+	}
+
+	if c.X == b.X {
+		c.Y += norm(c.Y, b.Y)
+		return c, nil
+	}
+
+	if c.Y == b.Y {
+		c.X += norm(c.X, b.X)
+		return c, nil
+	}
+
+	for _, m := range diagonals {
+		n := c.Add(m)
+
+		if n.Adjacent(b) {
+			return n, nil
+		}
+	}
+
+	return Coord{}, errors.New("no possible move")
+}
+
 func (c Coord) Equals(b Coord) bool {
 	return c.X == b.X && c.Y == b.Y
+}
+
+func norm(a, b int) int {
+	if a > b {
+		return -1
+	}
+
+	if a < b {
+		return 1
+	}
+
+	return 0
 }
 
 func delta(a, b int) int {
@@ -55,6 +94,13 @@ var movements = map[string]Coord{
 	"L": {X: -1, Y: 0},
 }
 
+var diagonals = map[string]Coord{
+	"UR": {X: 1, Y: 1},
+	"DR": {X: 1, Y: -1},
+	"DL": {X: -1, Y: -1},
+	"UL": {X: -1, Y: 1},
+}
+
 func run() error {
 	var linum int
 
@@ -66,12 +112,12 @@ func run() error {
 	flag.BoolVar(&vis.Enabled, "debug", false, "Enable debug visualiser")
 	flag.Parse()
 
-	var head, prevHead, tail Coord
+	knots := make([]Coord, 10)
 
 	visitMap := map[string]int{}
 
 	vis.Heading("Initial State")
-	vis.Print(head, tail)
+	vis.Print(knots)
 
 	r := bufio.NewScanner(os.Stdin)
 
@@ -103,16 +149,20 @@ func run() error {
 		}
 
 		for i := 0; i < d; i++ {
-			prevHead = head
-			head = head.Add(m)
+			knots[0] = knots[0].Add(m)
 
-			if !tail.Adjacent(head) {
-				tail = prevHead
+			for i := 1; i < len(knots); i++ {
+				knots[i], err = knots[i].FindAdjacent(knots[i-1])
+				if err != nil {
+					return fmt.Errorf(
+						"could not move knot %d: %w",
+						i, err)
+				}
 			}
 
-			vis.Print(head, tail)
+			vis.Print(knots)
 
-			visitMap[tail.Key()]++
+			visitMap[knots[9].Key()]++
 		}
 	}
 
@@ -141,24 +191,36 @@ func (v Visualiser) Heading(txt string) {
 	println("==", txt, "==\n")
 }
 
-func (v Visualiser) Print(head, tail Coord) {
+func (v Visualiser) Print(knots []Coord) {
 	if !v.Enabled {
 		return
 	}
 
 	for pos := v.TopLeft; pos.Y >= v.BottomRight.Y; pos.Y-- {
 		for pos.X = v.TopLeft.X; pos.X < v.BottomRight.X; pos.X++ {
-			if pos.Equals(head) {
-				print("H")
-			} else if pos.Equals(tail) {
-				print("T")
-			} else {
-				print(".")
-			}
+			printPos(pos, knots)
 		}
 
 		println()
 	}
 
 	println()
+}
+
+func printPos(p Coord, knots []Coord) {
+	for i := 0; i < len(knots); i++ {
+		if !p.Equals(knots[i]) {
+			continue
+		}
+
+		if i == 0 {
+			print("H")
+			return
+		}
+
+		print(i)
+		return
+	}
+
+	print(".")
 }
