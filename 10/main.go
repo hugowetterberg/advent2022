@@ -19,6 +19,7 @@ type Machine struct {
 	X         int
 	Operation Operation
 	Failure   error
+	Display   []bool
 }
 
 type Operation interface {
@@ -70,8 +71,14 @@ func run() error {
 
 	go readInput(r, ops, cancel)
 
+	var (
+		rows = 6
+		cols = 40
+	)
+
 	m := Machine{
-		X: 1,
+		X:       1,
+		Display: make([]bool, rows*cols),
 	}
 
 	var sum int
@@ -88,6 +95,12 @@ func run() error {
 			sum += cycle * m.X
 		}
 
+		position := (cycle - 1) % cols
+
+		if m.X >= position-1 && m.X <= position+1 {
+			m.Display[cycle-1] = true
+		}
+
 		if m.Operation == nil {
 			break
 		}
@@ -102,6 +115,18 @@ func run() error {
 	}
 
 	println("sum", sum)
+
+	for i, on := range m.Display {
+		if on {
+			print("#")
+		} else {
+			print(".")
+		}
+
+		if (i+1)%cols == 0 {
+			println()
+		}
+	}
 
 	return nil
 }
