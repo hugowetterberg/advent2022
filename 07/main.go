@@ -141,6 +141,23 @@ func run() error {
 
 	println("small directory sum", sum)
 
+	var justRightSize int
+
+	freeSpace := 70000000 - root.Size
+	freeUp := 30000000 - freeSpace
+
+	walkNodes(root, func(n *Node) {
+		if !n.IsDir {
+			return
+		}
+
+		if n.Size >= freeUp && (justRightSize == 0 || n.Size < justRightSize) {
+			justRightSize = n.Size
+		}
+	})
+
+	println("size of dir to delete", justRightSize)
+
 	return nil
 }
 
